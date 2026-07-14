@@ -2,6 +2,8 @@
 # Traffic Keeper - 卸载回调脚本
 # 彻底终止所有相关进程，数据目录由系统卸载对话框控制
 
+VAR_DIR="${TRIM_PKGVAR:-/var/apps/traffic-keeper}"
+
 # 终止 traffic-keeper.sh 进程
 for pid in $(pgrep -f "traffic-keeper.sh" 2>/dev/null); do
     kill -9 "$pid" 2>/dev/null
@@ -20,9 +22,11 @@ for pid in $(pgrep -f "python3.*traffic-keeper" 2>/dev/null); do
     echo "已终止 python3 PID: $pid"
 done
 
-# 清理 PID 文件
-rm -f /var/apps/traffic-keeper/tk.pid
-rm -f /var/apps/traffic-keeper/var/app.pid
+# 清理所有 PID 文件
+rm -f "${VAR_DIR}/app.pid"
+rm -f "${VAR_DIR}/web.pid"
+rm -f "${VAR_DIR}/tk.pid"
+rm -f "${VAR_DIR}/var/app.pid"
 
 # 等待进程完全退出
 sleep 2
