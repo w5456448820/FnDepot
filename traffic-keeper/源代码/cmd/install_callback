@@ -1,10 +1,17 @@
 #!/bin/bash
 # Traffic Keeper - 安装后回调脚本
-# 复制默认配置文件（如果不存在）
+# 初始化数据目录和配置文件
 
-ENV_FILE="${TRIM_PKGVAR}/.env"
+DATA_DIR="${TRIM_PKGVAR}"
+ENV_FILE="${DATA_DIR}/.env"
 APP_DIR="${TRIM_APPDEST}/server"
 
+# 创建数据目录结构（确保系统能识别为有用户数据的应用）
+mkdir -p "${DATA_DIR}/data"
+mkdir -p "${DATA_DIR}/links"
+mkdir -p "${DATA_DIR}/流量统计"
+
+# 复制默认配置文件（如果不存在）
 if [ -f "${APP_DIR}/.env.default" ] && [ ! -f "$ENV_FILE" ]; then
     cp "${APP_DIR}/.env.default" "$ENV_FILE"
     echo "已创建默认配置文件: $ENV_FILE"

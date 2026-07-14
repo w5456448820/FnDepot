@@ -1,1 +1,10 @@
-{}
+{
+    "data_dirs": [
+        "data",
+        "links",
+        "流量统计"
+    ],
+    "persist_files": [
+        ".env"
+    ]
+}
