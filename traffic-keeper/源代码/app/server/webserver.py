@@ -77,6 +77,19 @@ def env_to_dict():
         if key == "DOWNLOAD_URLS":
             value = value.replace(",", "\n")
         result[key] = value
+
+    # 新旧键名冲突时优先保留新键名（旧键名由之前错误的 _rm 映射写入）
+    _migrate = {
+        "MAX_SPEED": "LIMIT_RATE",
+        "MIN_ROUND_SIZE": "ROUND_MIN_BYTES",
+        "MIN_FILE_SIZE": "FETCH_MIN_FILE_BYTES",
+        "DAILY_LIMIT": "MAX_DAILY_BYTES",
+        "MAX_DOWNLOAD_COUNT": "RUN_TIMES_MAX",
+    }
+    for old_key, new_key in _migrate.items():
+        if old_key in result and new_key in result:
+            del result[old_key]
+
     return result
 
 def write_env(config_dict):
