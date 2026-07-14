@@ -653,8 +653,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 length = int(self.headers.get("Content-Length", 0))
                 body = self.rfile.read(length).decode("utf-8")
                 data = json.loads(body)
-                _rm = {"LIMIT_RATE":"MAX_SPEED","ROUND_MIN_BYTES":"MIN_ROUND_SIZE","FETCH_MIN_FILE_BYTES":"MIN_FILE_SIZE","MAX_DAILY_BYTES":"DAILY_LIMIT","RUN_TIMES_MAX":"MAX_DOWNLOAD_COUNT"}
-                data = {_rm.get(k, k): v for k, v in data.items()}
                 success = write_env(data)
                 if success:
                     self._send_json({"success": True})
