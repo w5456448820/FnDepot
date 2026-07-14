@@ -123,8 +123,8 @@ apply_defaults() {
     SLEEP_MAX="${SLEEP_MAX:-15m}"
     SLEEP_MIN="${SLEEP_MIN:-1m}"
     DYNAMIC_SLEEP="${DYNAMIC_SLEEP:-true}"
-    ROUND_MIN_BYTES="${ROUND_MIN_BYTES:-0}"
-    RUN_TIMES_MAX="${RUN_TIMES_MAX:-3}"
+    ROUND_MIN_BYTES="${ROUND_MIN_BYTES:-1G}"
+    RUN_TIMES_MAX="${RUN_TIMES_MAX:-30}"
     CONNECT_TIMEOUT="${CONNECT_TIMEOUT:-15s}"
     MAX_TIME="${MAX_TIME:-50m}"
     RETRY="${RETRY:-5}"
@@ -151,7 +151,7 @@ apply_defaults() {
     LINK_CHECK_INTERVAL=$(parse_time "$LINK_CHECK_INTERVAL")
     
     # 确保都是无符号整数
-    is_uint "$RUN_TIMES_MAX" || RUN_TIMES_MAX=3
+    is_uint "$RUN_TIMES_MAX" || RUN_TIMES_MAX=30
     is_uint "$CONNECT_TIMEOUT" || CONNECT_TIMEOUT=15
     is_uint "$MAX_TIME" || MAX_TIME=3000
     is_uint "$RETRY" || RETRY=5

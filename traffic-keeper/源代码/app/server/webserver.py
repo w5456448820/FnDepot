@@ -45,7 +45,7 @@ DEFAULTS = {
     "SLEEP_MAX": "15m",
     "SLEEP_MIN": "1m",
     "DYNAMIC_SLEEP": "true",
-    "ROUND_MIN_BYTES": "0",
+    "ROUND_MIN_BYTES": "1G",
     "RUN_TIMES_MAX": "30",
     "CONNECT_TIMEOUT": "15s",
     "MAX_TIME": "10m",
