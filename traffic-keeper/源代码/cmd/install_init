@@ -1,15 +1,2 @@
 #!/bin/bash
-# Traffic Keeper - 安装初始化脚本
-# 复制默认配置文件（如果不存在）
-
-ENV_FILE="${TRIM_PKGVAR}/.env"
-APP_DIR=""
-for d in "${TRIM_PKGVAR}/app" "${TRIM_APPDEST}/server"; do
-    if [ -f "${d}/.env.default" ]; then APP_DIR="$d"; break; fi
-done
-
-if [ -n "$APP_DIR" ] && [ ! -f "$ENV_FILE" ]; then
-    cp "${APP_DIR}/.env.default" "$ENV_FILE"
-fi
-
 exit 0

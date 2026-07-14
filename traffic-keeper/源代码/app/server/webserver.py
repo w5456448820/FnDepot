@@ -614,7 +614,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             try:
                 _cfg = env_to_dict()
                 _km = {"MAX_SPEED":"LIMIT_RATE","MIN_ROUND_SIZE":"ROUND_MIN_BYTES","MIN_FILE_SIZE":"FETCH_MIN_FILE_BYTES","DAILY_LIMIT":"MAX_DAILY_BYTES","MAX_DOWNLOAD_COUNT":"RUN_TIMES_MAX"}
-                self._send_json({_km.get(k, k): v for k, v in _cfg.items()})
+                _res = {}
+                for k, v in _cfg.items():
+                    mapped = _km.get(k, k)
+                    # 新键名优先：如果 mapped 已存在且当前 k 是旧键名，跳过
+                    if mapped in _res and k != mapped:
+                        continue
+                    _res[mapped] = v
+                self._send_json(_res)
             except Exception as e:
                 self._send_json({"success": False, "error": str(e)}, 500)
         elif path == "/api/stats":

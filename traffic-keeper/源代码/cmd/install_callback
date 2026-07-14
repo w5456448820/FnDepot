@@ -1,2 +1,13 @@
 #!/bin/bash
+# Traffic Keeper - 安装后回调脚本
+# 复制默认配置文件（如果不存在）
+
+ENV_FILE="${TRIM_PKGVAR}/.env"
+APP_DIR="${TRIM_APPDEST}/server"
+
+if [ -f "${APP_DIR}/.env.default" ] && [ ! -f "$ENV_FILE" ]; then
+    cp "${APP_DIR}/.env.default" "$ENV_FILE"
+    echo "已创建默认配置文件: $ENV_FILE"
+fi
+
 exit 0
