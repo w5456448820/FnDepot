@@ -1,30 +1,22 @@
 #!/bin/bash
 # Traffic Keeper - 卸载回调脚本
-# 通过 .env 中的 REMOVE_DATA_ON_UNINSTALL 控制是否删除数据
-# 请在 Web 管理界面「系统设置」中配置，卸载前请先保存配置
+# 仅清理运行中的进程，数据目录由系统卸载对话框控制
 
-DATA_DIR="${TRIM_PKGVAR}"
-ENV_FILE="${DATA_DIR}/.env"
-REMOVE_DATA="false"
-
-# 从 .env 读取配置
-if [ -f "$ENV_FILE" ]; then
-    val=$(grep -E '^REMOVE_DATA_ON_UNINSTALL=' "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d ' ')
-    [ "$val" = "true" ] && REMOVE_DATA="true"
+# 终止 Web 管理服务
+PID_FILE="/var/apps/traffic-keeper/tk.pid"
+if [ -f "$PID_FILE" ]; then
+    PID=$(cat "$PID_FILE" 2>/dev/null)
+    if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
+        kill "$PID" 2>/dev/null
+        echo "已终止进程 PID: $PID"
+    fi
+    rm -f "$PID_FILE"
 fi
 
-echo "=========================================="
-echo " Traffic Keeper 卸载"
-echo " 数据删除: $REMOVE_DATA"
-echo " 数据目录: ${DATA_DIR}"
-echo "=========================================="
-
-if [ "$REMOVE_DATA" = "true" ]; then
-    rm -rf "${DATA_DIR}"
-    echo "✅ Traffic Keeper 已卸载，全部数据已删除"
-else
-    echo "ℹ️  数据已保留，如需删除请手动执行:"
-    echo "   rm -rf ${DATA_DIR}"
-fi
+# 终止残留的 webserver 进程
+for pid in $(pgrep -f "python3.*webserver" 2>/dev/null); do
+    kill "$pid" 2>/dev/null
+    echo "已终止残留进程 PID: $pid"
+done
 
 exit 0
