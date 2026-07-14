@@ -2,7 +2,6 @@
 
 LOG_FILE="${TRIM_PKGVAR}/info.log"
 PID_FILE="${TRIM_PKGVAR}/app.pid"
-WEB_PID_FILE="${TRIM_PKGVAR}/web.pid"
 PORT_FILE="${TRIM_PKGVAR}/.port"
 
 APP_DIR=""
@@ -26,9 +25,6 @@ log_msg() {
 
 check_process() {
     local pid=$1
-    if [ -z "$pid" ]; then
-        return 1
-    fi
     if kill -0 "${pid}" 2>/dev/null; then
         return 0
     else
@@ -36,56 +32,11 @@ check_process() {
     fi
 }
 
-# 检查 webserver 是否在运行（通过 PID 文件或端口）
-web_status() {
-    # 先检查 PID 文件
-    if [ -f "${WEB_PID_FILE}" ]; then
-        local wpid
-        wpid=$(head -n 1 "${WEB_PID_FILE}" | tr -d '[:space:]')
-        if check_process "${wpid}"; then
-            return 0
-        else
-            rm -f "${WEB_PID_FILE}"
-        fi
-    fi
-    # 再通过 pgrep 检查
-    if pgrep -f "webserver.py" > /dev/null 2>&1; then
-        return 0
-    fi
-    # 最后检查端口
-    if lsof -ti:${WEB_PORT} > /dev/null 2>&1; then
-        return 0
-    fi
-    if ss -tlnp 2>/dev/null | grep -q ":${WEB_PORT} "; then
-        return 0
-    fi
-    return 1
-}
-
-kill_all_traffic_keeper() {
-    # 强制终止所有相关进程
-    for p in $(pgrep -f "webserver.py" 2>/dev/null); do
-        kill -9 "$p" 2>/dev/null
-        log_msg "killed webserver.py PID: $p"
-    done
-    for p in $(pgrep -f "traffic-keeper.sh" 2>/dev/null); do
-        kill -9 "$p" 2>/dev/null
-        log_msg "killed traffic-keeper.sh PID: $p"
-    done
-    for p in $(pgrep -f "python3.*traffic-keeper" 2>/dev/null); do
-        kill -9 "$p" 2>/dev/null
-        log_msg "killed python3 traffic-keeper PID: $p"
-    done
-    # 检查端口占用
-    local port_pid
-    port_pid=$(lsof -ti:${WEB_PORT} 2>/dev/null || ss -tlnp 2>/dev/null | grep ":${WEB_PORT} " | grep -oP 'pid=\K[0-9]+' | head -1)
-    if [ -n "$port_pid" ]; then
-        log_msg "端口 ${WEB_PORT} 被 PID ${port_pid} 占用，强制终止"
-        kill -9 "$port_pid" 2>/dev/null
-    fi
-}
-
 start_process() {
+    if status; then
+        return 0
+    fi
+
     log_msg "Starting Traffic Keeper (port=${WEB_PORT})..."
 
     export TK_APP_DIR="$APP_DIR"
@@ -95,47 +46,22 @@ start_process() {
     export TK_LOG_FILE="$LOG_FILE"
     export TK_PID_DIR="${TRIM_PKGVAR}"
     export TK_WEB_PORT="${WEB_PORT}"
-    # 禁止 Python 生成 .pyc 缓存，避免旧缓存导致代码不更新
-    export PYTHONDONTWRITEBYTECODE=1
 
     mkdir -p "$DATA_DIR/links" "$DISPLAY_DIR"
     [ -f "$ENV_FILE" ] || touch "$ENV_FILE"
 
-    # 清理 Python 缓存，确保加载最新代码
-    find "${APP_DIR}" -name "*.pyc" -delete 2>/dev/null || true
-    find "${APP_DIR}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+    pkill -f "webserver.py" 2>/dev/null || true
+    pkill -f "traffic-keeper.sh" 2>/dev/null || true
+    sleep 1
 
-    # 清理所有残留进程
-    kill_all_traffic_keeper
-    sleep 2
-
-    # 确保端口已释放
-    if lsof -ti:${WEB_PORT} > /dev/null 2>&1; then
-        log_msg "警告: 端口 ${WEB_PORT} 仍被占用，再等待 2 秒..."
-        sleep 2
-        kill_all_traffic_keeper
-        sleep 1
-    fi
-
-    # 启动主程序（如果未运行）
-    if ! status; then
-        bash "${APP_DIR}/traffic-keeper.sh" >> ${LOG_FILE} 2>&1 &
-        echo -n "$!" > ${PID_FILE}
-        log_msg "traffic-keeper.sh started (PID: $!)"
-    else
-        log_msg "traffic-keeper.sh 已在运行"
-    fi
+    bash "${APP_DIR}/traffic-keeper.sh" >> ${LOG_FILE} 2>&1 &
+    echo -n "$!" > ${PID_FILE}
+    log_msg "traffic-keeper.sh started (PID: $!)"
 
     sleep 1
 
-    # 启动 webserver（如果未运行）
-    if ! web_status; then
-        python3 "${APP_DIR}/webserver.py" >> ${LOG_FILE} 2>&1 &
-        echo -n "$!" > ${WEB_PID_FILE}
-        log_msg "webserver.py started (PID: $!, port: ${WEB_PORT})"
-    else
-        log_msg "webserver.py 已在运行"
-    fi
+    python3 "${APP_DIR}/webserver.py" >> ${LOG_FILE} 2>&1 &
+    log_msg "webserver.py started (PID: $!, port: ${WEB_PORT})"
 
     return 0
 }
@@ -143,39 +69,36 @@ start_process() {
 stop_process() {
     log_msg "Stopping Traffic Keeper..."
 
-    # 终止主进程
     if [ -r "${PID_FILE}" ]; then
-        local pid
         pid=$(head -n 1 "${PID_FILE}" | tr -d '[:space:]')
-        log_msg "stopping main pid=${pid}"
+        log_msg "pid=${pid}"
+        if ! check_process "${pid}"; then
+            rm -f "${PID_FILE}"
+            log_msg "remove pid file"
+            pkill -f "webserver.py" 2>/dev/null || true
+            return 0
+        fi
+        kill -TERM ${pid} 2>/dev/null
+        local count=0
+        while check_process "${pid}" && [ $count -lt 10 ]; do
+            sleep 1
+            count=$((count + 1))
+        done
         if check_process "${pid}"; then
-            kill -9 "${pid}" 2>/dev/null
+            kill -KILL "${pid}" 2>/dev/null
+            sleep 1
         fi
         rm -f "${PID_FILE}"
     fi
 
-    # 终止 webserver
-    if [ -r "${WEB_PID_FILE}" ]; then
-        local wpid
-        wpid=$(head -n 1 "${WEB_PID_FILE}" | tr -d '[:space:]')
-        log_msg "stopping web pid=${wpid}"
-        if check_process "${wpid}"; then
-            kill -9 "${wpid}" 2>/dev/null
-        fi
-        rm -f "${WEB_PID_FILE}"
-    fi
-
-    # 彻底清理所有相关进程
-    kill_all_traffic_keeper
-
-    sleep 1
+    pkill -f "webserver.py" 2>/dev/null || true
+    pkill -f "traffic-keeper.sh" 2>/dev/null || true
     log_msg "Stopped"
     return 0
 }
 
 status() {
     if [ -f "${PID_FILE}" ]; then
-        local pid
         pid=$(head -n 1 "${PID_FILE}" | tr -d '[:space:]')
         if check_process "${pid}"; then
             return 0

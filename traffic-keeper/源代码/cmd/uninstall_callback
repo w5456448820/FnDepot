@@ -1,35 +1,24 @@
 #!/bin/bash
 # Traffic Keeper - 卸载回调脚本
-# 彻底终止所有相关进程，数据目录由系统卸载对话框控制
+# 可选是否删除全部数据（通过 .env 中的 REMOVE_DATA_ON_UNINSTALL 控制）
 
-VAR_DIR="${TRIM_PKGVAR:-/var/apps/traffic-keeper}"
+DATA_DIR="${TRIM_PKGVAR}"
+ENV_FILE="${DATA_DIR}/.env"
+REMOVE_DATA="false"
 
-# 终止 traffic-keeper.sh 进程
-for pid in $(pgrep -f "traffic-keeper.sh" 2>/dev/null); do
-    kill -9 "$pid" 2>/dev/null
-    echo "已终止 traffic-keeper.sh PID: $pid"
-done
+# 从 .env 读取配置
+if [ -f "$ENV_FILE" ]; then
+    val=$(grep -E '^REMOVE_DATA_ON_UNINSTALL=' "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d ' ')
+    [ "$val" = "true" ] && REMOVE_DATA="true"
+fi
 
-# 终止所有 webserver.py 进程
-for pid in $(pgrep -f "webserver.py" 2>/dev/null); do
-    kill -9 "$pid" 2>/dev/null
-    echo "已终止 webserver.py PID: $pid"
-done
+if [ "$REMOVE_DATA" = "true" ]; then
+    rm -rf "${DATA_DIR}"
+    echo "Traffic Keeper 已卸载，全部数据已删除"
+else
+    # 仅删除应用文件，保留用户数据
+    echo "Traffic Keeper 已卸载，数据保留在: ${DATA_DIR}"
+    echo "如需删除数据，请手动执行: rm -rf ${DATA_DIR}"
+fi
 
-# 终止所有 python3 相关进程（保险措施）
-for pid in $(pgrep -f "python3.*traffic-keeper" 2>/dev/null); do
-    kill -9 "$pid" 2>/dev/null
-    echo "已终止 python3 PID: $pid"
-done
-
-# 清理所有 PID 文件
-rm -f "${VAR_DIR}/app.pid"
-rm -f "${VAR_DIR}/web.pid"
-rm -f "${VAR_DIR}/tk.pid"
-rm -f "${VAR_DIR}/var/app.pid"
-
-# 等待进程完全退出
-sleep 2
-
-echo "Traffic Keeper 进程已清理完毕"
 exit 0

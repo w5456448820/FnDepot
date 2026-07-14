@@ -58,6 +58,7 @@ DEFAULTS = {
     "MAX_DAILY_BYTES": "200G",
     "DOWNLOAD_URLS": "https://releases.ubuntu.com/22.04.5/ubuntu-22.04.5-desktop-amd64.iso,https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz,https://mirrors.tuna.tsinghua.edu.cn/ubuntu-releases/22.04.5/ubuntu-22.04.5-desktop-amd64.iso,https://mirrors.aliyun.com/linux-kernel/v6.x/linux-6.6.tar.xz,https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/v20.12.2/node-v20.12.2-linux-x64.tar.xz",
     "WEB_PORT": "8080",
+    "REMOVE_DATA_ON_UNINSTALL": "false",
 }
 
 def env_to_dict():
@@ -517,8 +518,7 @@ function renderGroups(boxId,groups,cfg,showTitle){const box=document.getElementB
 function renderConfig(cfg){renderGroups('tab-config',CONFIG_GROUPS,cfg,true)}
 function renderSources(cfg){renderGroups('tab-sources',SOURCE_GROUPS,cfg,false)}
 function updateHint(el){const key=el.name;const hintEl=el.parentElement.querySelector('.convert-hint');if(hintEl)hintEl.outerHTML=unitHint(key,el.value)}
-const DEFAULT_CONFIG={LIMIT_RATE:"5M",SLEEP_MAX:"15m",SLEEP_MIN:"1m",DYNAMIC_SLEEP:"true",ROUND_MIN_BYTES:"1G",RUN_TIMES_MAX:"30",CONNECT_TIMEOUT:"15s",MAX_TIME:"10m",RETRY:"5",RETRY_DELAY:"5s",FETCH_INTERVAL:"6h",LINK_CHECK_INTERVAL:"30m",FETCH_MIN_FILE_BYTES:"500M",USER_AGENT:"traffic-keeper/1.0.2 curl/8.0",MAX_DAILY_BYTES:"200G",DOWNLOAD_URLS:"https://releases.ubuntu.com/22.04.5/ubuntu-22.04.5-desktop-amd64.iso\nhttps://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz\nhttps://mirrors.tuna.tsinghua.edu.cn/ubuntu-releases/22.04.5/ubuntu-22.04.5-desktop-amd64.iso\nhttps://mirrors.aliyun.com/linux-kernel/v6.x/linux-6.6.tar.xz\nhttps://mirrors.tuna.tsinghua.edu.cn/nodejs-release/v20.12.2/node-v20.12.2-linux-x64.tar.xz",WEB_PORT:"8080"};
-function loadConfig(){fetch('/api/config').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{if(!d||typeof d!=='object')throw new Error('数据格式错误');renderConfig(d);renderSources(d);showToast('配置已重新读取','success')}).catch(e=>{console.error('loadConfig error:',e);renderConfig(DEFAULT_CONFIG);renderSources(DEFAULT_CONFIG);showToast('使用默认配置显示（读取失败: '+e.message+'）','error')})}
+function loadConfig(){fetch('/api/config').then(r=>r.json()).then(d=>{renderConfig(d);renderSources(d);showToast('配置已重新读取','success')}).catch(e=>showToast('读取失败: '+e,'error'))}
 function saveConfig(){const data={};document.querySelectorAll('#tab-config input,#tab-config select,#tab-config textarea,#tab-sources input,#tab-sources select,#tab-sources textarea').forEach(el=>{data[el.name]=el.value});fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json()).then(res=>{if(res.success)showToast('配置保存成功！下一轮任务自动生效','success');else showToast('保存失败: '+(res.error||'未知错误'),'error')}).catch(e=>showToast('保存失败: '+e,'error'))}
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type;setTimeout(()=>t.classList.add('show'),10);setTimeout(()=>t.classList.remove('show'),3000)}
 function updateStats(){fetch('/api/stats').then(r=>r.json()).then(d=>{document.getElementById('stat-date').textContent=d.DATE||'-';document.getElementById('stat-time').textContent=d.GENERATE_TIME||'-';document.getElementById('stat-count').textContent=d.COUNT||'0';document.getElementById('stat-size').textContent=d._SIZE_HUMAN||'-';document.getElementById('stat-dur').textContent=d._DURATION_HUMAN||'-';document.getElementById('stat-fetch-time').textContent=d.FETCH_TIME||'-';document.getElementById('stat-fetch-count').textContent=d.FETCH_COUNT||'0';document.getElementById('stat-valid-count').textContent=d.VALID_COUNT||'0';document.getElementById('stat-check-time').textContent=d.CHECK_TIME||'-';document.getElementById('stat-check-dur').textContent=d.CHECK_DURATION||'-';}).catch(()=>{})}
@@ -713,36 +713,14 @@ class ThreadedServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
 
 def main():
-    import sys
     port = get_web_port()
+    os.makedirs(os.path.dirname(LOG_FILE) or ".", exist_ok=True)
+    server = ThreadedServer(("0.0.0.0", port), Handler)
+    print(f"[webserver] Traffic Keeper Web UI running on http://0.0.0.0:{port}")
     try:
-        os.makedirs(os.path.dirname(LOG_FILE) or ".", exist_ok=True)
-    except Exception:
-        pass
-
-    print(f"[webserver] === Traffic Keeper Web Server Starting ===", flush=True)
-    print(f"[webserver] ENV_FILE = {ENV_FILE}", flush=True)
-    print(f"[webserver] LOG_FILE = {LOG_FILE}", flush=True)
-    print(f"[webserver] Port = {port}", flush=True)
-    try:
-        cfg = env_to_dict()
-        print(f"[webserver] Config keys = {list(cfg.keys())}", flush=True)
-        print(f"[webserver] RUN_TIMES_MAX = {cfg.get('RUN_TIMES_MAX')}", flush=True)
-    except Exception as e:
-        print(f"[webserver] Config error: {e}", flush=True)
-
-    try:
-        server = ThreadedServer(("0.0.0.0", port), Handler)
-        print(f"[webserver] Traffic Keeper Web UI running on http://0.0.0.0:{port}", flush=True)
         server.serve_forever()
-    except OSError as e:
-        print(f"[webserver] ERROR: Failed to bind port {port}: {e}", flush=True)
-        sys.exit(1)
     except KeyboardInterrupt:
         server.shutdown()
-    except Exception as e:
-        print(f"[webserver] ERROR: {e}", flush=True)
-        sys.exit(1)
 
 
 if __name__ == "__main__":
