@@ -46,12 +46,19 @@ start_process() {
     export TK_LOG_FILE="$LOG_FILE"
     export TK_PID_DIR="${TRIM_PKGVAR}"
     export TK_WEB_PORT="${WEB_PORT}"
+    # 禁止 Python 生成 .pyc 缓存，避免旧缓存导致代码不更新
+    export PYTHONDONTWRITEBYTECODE=1
 
     mkdir -p "$DATA_DIR/links" "$DISPLAY_DIR"
     [ -f "$ENV_FILE" ] || touch "$ENV_FILE"
 
-    pkill -f "webserver.py" 2>/dev/null || true
-    pkill -f "traffic-keeper.sh" 2>/dev/null || true
+    # 清理 Python 缓存，确保加载最新代码
+    find "${APP_DIR}" -name "*.pyc" -delete 2>/dev/null || true
+    find "${APP_DIR}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+
+    # 强制终止所有残留进程
+    pkill -9 -f "webserver.py" 2>/dev/null || true
+    pkill -9 -f "traffic-keeper.sh" 2>/dev/null || true
     sleep 1
 
     bash "${APP_DIR}/traffic-keeper.sh" >> ${LOG_FILE} 2>&1 &
