@@ -1,22 +1,31 @@
 #!/bin/bash
 # Traffic Keeper - 卸载回调脚本
-# 仅清理运行中的进程，数据目录由系统卸载对话框控制
+# 彻底终止所有相关进程，数据目录由系统卸载对话框控制
 
-# 终止 Web 管理服务
-PID_FILE="/var/apps/traffic-keeper/tk.pid"
-if [ -f "$PID_FILE" ]; then
-    PID=$(cat "$PID_FILE" 2>/dev/null)
-    if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
-        kill "$PID" 2>/dev/null
-        echo "已终止进程 PID: $PID"
-    fi
-    rm -f "$PID_FILE"
-fi
-
-# 终止残留的 webserver 进程
-for pid in $(pgrep -f "python3.*webserver" 2>/dev/null); do
-    kill "$pid" 2>/dev/null
-    echo "已终止残留进程 PID: $pid"
+# 终止 traffic-keeper.sh 进程
+for pid in $(pgrep -f "traffic-keeper.sh" 2>/dev/null); do
+    kill -9 "$pid" 2>/dev/null
+    echo "已终止 traffic-keeper.sh PID: $pid"
 done
 
+# 终止所有 webserver.py 进程
+for pid in $(pgrep -f "webserver.py" 2>/dev/null); do
+    kill -9 "$pid" 2>/dev/null
+    echo "已终止 webserver.py PID: $pid"
+done
+
+# 终止所有 python3 相关进程（保险措施）
+for pid in $(pgrep -f "python3.*traffic-keeper" 2>/dev/null); do
+    kill -9 "$pid" 2>/dev/null
+    echo "已终止 python3 PID: $pid"
+done
+
+# 清理 PID 文件
+rm -f /var/apps/traffic-keeper/tk.pid
+rm -f /var/apps/traffic-keeper/var/app.pid
+
+# 等待进程完全退出
+sleep 2
+
+echo "Traffic Keeper 进程已清理完毕"
 exit 0

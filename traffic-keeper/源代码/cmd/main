@@ -56,10 +56,25 @@ start_process() {
     find "${APP_DIR}" -name "*.pyc" -delete 2>/dev/null || true
     find "${APP_DIR}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 
-    # 强制终止所有残留进程
-    pkill -9 -f "webserver.py" 2>/dev/null || true
-    pkill -9 -f "traffic-keeper.sh" 2>/dev/null || true
-    sleep 1
+    # 强制终止所有残留进程（确保端口释放）
+    for p in $(pgrep -f "webserver.py" 2>/dev/null); do
+        kill -9 "$p" 2>/dev/null
+    done
+    for p in $(pgrep -f "traffic-keeper.sh" 2>/dev/null); do
+        kill -9 "$p" 2>/dev/null
+    done
+    for p in $(pgrep -f "python3.*traffic-keeper" 2>/dev/null); do
+        kill -9 "$p" 2>/dev/null
+    done
+    sleep 2
+
+    # 检查端口是否仍被占用，强制终止占用进程
+    port_pid=$(lsof -ti:${WEB_PORT} 2>/dev/null || ss -tlnp 2>/dev/null | grep ":${WEB_PORT} " | grep -oP 'pid=\K[0-9]+')
+    if [ -n "$port_pid" ]; then
+        log_msg "端口 ${WEB_PORT} 被 PID ${port_pid} 占用，强制终止"
+        kill -9 "$port_pid" 2>/dev/null
+        sleep 1
+    fi
 
     bash "${APP_DIR}/traffic-keeper.sh" >> ${LOG_FILE} 2>&1 &
     echo -n "$!" > ${PID_FILE}
@@ -76,30 +91,35 @@ start_process() {
 stop_process() {
     log_msg "Stopping Traffic Keeper..."
 
+    # 强制终止 traffic-keeper.sh（主进程）
     if [ -r "${PID_FILE}" ]; then
         pid=$(head -n 1 "${PID_FILE}" | tr -d '[:space:]')
         log_msg "pid=${pid}"
-        if ! check_process "${pid}"; then
-            rm -f "${PID_FILE}"
-            log_msg "remove pid file"
-            pkill -f "webserver.py" 2>/dev/null || true
-            return 0
-        fi
-        kill -TERM ${pid} 2>/dev/null
-        local count=0
-        while check_process "${pid}" && [ $count -lt 10 ]; do
-            sleep 1
-            count=$((count + 1))
-        done
         if check_process "${pid}"; then
-            kill -KILL "${pid}" 2>/dev/null
+            kill -9 "${pid}" 2>/dev/null
             sleep 1
         fi
         rm -f "${PID_FILE}"
     fi
 
-    pkill -f "webserver.py" 2>/dev/null || true
-    pkill -f "traffic-keeper.sh" 2>/dev/null || true
+    # 强制终止所有 webserver.py 进程
+    for p in $(pgrep -f "webserver.py" 2>/dev/null); do
+        kill -9 "$p" 2>/dev/null
+    done
+
+    # 强制终止所有 traffic-keeper.sh 进程
+    for p in $(pgrep -f "traffic-keeper.sh" 2>/dev/null); do
+        kill -9 "$p" 2>/dev/null
+    done
+
+    # 强制终止所有 python3 traffic-keeper 进程
+    for p in $(pgrep -f "python3.*traffic-keeper" 2>/dev/null); do
+        kill -9 "$p" 2>/dev/null
+    done
+
+    # 清理 PID 文件
+    rm -f "${TRIM_PKGVAR}/app.pid"
+
     log_msg "Stopped"
     return 0
 }
