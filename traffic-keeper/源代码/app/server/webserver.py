@@ -13,12 +13,9 @@ import threading
 import re
 
 ENV_FILE = os.environ.get("TK_ENV_FILE", "/app/.env")
-LOG_FILE = os.path.join(os.environ.get("TK_DATA_DIR", "/app/data"), "console.log")
+LOG_FILE = os.environ.get("TK_LOG_FILE", "/app/data/info.log")
 
 def get_web_port():
-    env_port = os.environ.get("TK_WEB_PORT", "")
-    if env_port.isdigit():
-        return int(env_port)
     try:
         with open(ENV_FILE, "r", encoding="utf-8", errors="replace") as f:
             for line in f:
@@ -190,8 +187,9 @@ def get_stats():
         data["_DURATION_HUMAN"] = f"{dur//3600:02d}:{(dur%3600)//60:02d}:{dur%60:02d}"
 
     # 链接抓取统计
-    fetch_stamp = os.path.join(os.environ.get("TK_DATA_DIR", "/app/data"), "links", ".last-fetch")
-    fetched_links = os.path.join(os.environ.get("TK_DATA_DIR", "/app/data"), "links", "fetched-links.txt")
+    _links = os.path.join(os.environ.get("TK_DATA_DIR", "/app/data"), "links")
+    fetch_stamp = os.path.join(_links, ".last-fetch")
+    fetched_links = os.path.join(_links, "fetched-links.txt")
     try:
         if os.path.exists(fetch_stamp):
             mtime = os.path.getmtime(fetch_stamp)
@@ -213,7 +211,7 @@ def get_stats():
         data["FETCH_COUNT"] = "0"
 
     # 可用链接数（经检测后有效的链接）
-    validated_links = os.path.join(os.environ.get("TK_DATA_DIR", "/app/data"), "links", "validated_urls.list")
+    validated_links = os.path.join(_links, "validated_urls.list")
     try:
         if os.path.exists(validated_links):
             with open(validated_links, "r", encoding="utf-8", errors="replace") as f:
@@ -225,7 +223,7 @@ def get_stats():
         data["VALID_COUNT"] = "0"
 
     # 上次链接检测时间
-    check_stamp = os.path.join(os.environ.get("TK_DATA_DIR", "/app/data"), "links", ".last-check")
+    check_stamp = os.path.join(_links, ".last-check")
     try:
         if os.path.exists(check_stamp):
             mtime = os.path.getmtime(check_stamp)
@@ -238,8 +236,8 @@ def get_stats():
 
     # 链接检测耗时
     try:
-        if os.path.exists(os.path.join(os.environ.get("TK_DATA_DIR", "/app/data"), "links", "check_duration.txt")):
-            with open(os.path.join(os.environ.get("TK_DATA_DIR", "/app/data"), "links", "check_duration.txt"), "r", encoding="utf-8", errors="replace") as f:
+        if os.path.exists(os.path.join(_links, "check_duration.txt")):
+            with open(os.path.join(_links, "check_duration.txt"), "r", encoding="utf-8", errors="replace") as f:
                 dur = int(f.read().strip() or "0")
                 data["CHECK_DURATION"] = f"{dur//3600:02d}:{(dur%3600)//60:02d}:{dur%60:02d}"
         else:
@@ -407,7 +405,7 @@ body{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-s
 @media(max-width:768px){.config-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
 </style></head><body>
 <div class="container">
-<div class="header"><h1>Traffic Keeper</h1>
+<div class="header"><div class="version">v2.9.2</div><h1>Traffic Keeper</h1>
 <div class="sub">飞牛 NAS 流量平衡脚本 | <span id="server-time"></span></div></div>
 <div class="stats-panel"><div class="stats" id="stats-box">
 <div class="stat-card"><div class="label">生成日期</div><div class="value" id="stat-date">-</div></div>
@@ -471,7 +469,7 @@ FETCH_INTERVAL:{label:"链接抓取间隔",type:"text",desc:"支持 s/m/h 单位
 FETCH_MIN_FILE_BYTES:{label:"最小文件大小",type:"text",desc:"支持 K/M/G/T 单位，如 1G / 500M",unit:"size"},
 USER_AGENT:{label:"User-Agent",type:"text",desc:"HTTP 请求标识"},
 MAX_DAILY_BYTES:{label:"单日最大下载量",type:"text",desc:"支持 K/M/G/T 单位，如 200G / 1T",unit:"size"},
-DOWNLOAD_URLS:{label:"下载链接列表",type:"textarea",desc:"每行一个链接"},
+DOWNLOAD_URLS:{label:"备用下载链接",type:"textarea",desc:"抓取链接全部失效时的备用链接，每行一个"},
 WEB_PORT:{label:"Web 端口",type:"number",desc:"管理界面端口，需与 docker-compose 一致"}
 };
 function parseTime(v){const m=String(v).trim().match(/^(\d+)\s*([smh]?)$/i);if(!m)return null;const n=parseInt(m[1]),u=m[2].toLowerCase();if(u==='h')return n*3600;if(u==='m')return n*60;return n}
@@ -579,7 +577,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_html(INDEX_HTML)
         elif path == "/api/config":
             try:
-                self._send_json(env_to_dict())
+                _cfg = env_to_dict()
+                _km = {"MAX_SPEED":"LIMIT_RATE","MIN_ROUND_SIZE":"ROUND_MIN_BYTES","MIN_FILE_SIZE":"FETCH_MIN_FILE_BYTES","DAILY_LIMIT":"MAX_DAILY_BYTES","MAX_DOWNLOAD_COUNT":"RUN_TIMES_MAX"}
+                self._send_json({_km.get(k, k): v for k, v in _cfg.items()})
             except Exception as e:
                 self._send_json({"success": False, "error": str(e)}, 500)
         elif path == "/api/stats":
@@ -653,6 +653,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 length = int(self.headers.get("Content-Length", 0))
                 body = self.rfile.read(length).decode("utf-8")
                 data = json.loads(body)
+                _rm = {"LIMIT_RATE":"MAX_SPEED","ROUND_MIN_BYTES":"MIN_ROUND_SIZE","FETCH_MIN_FILE_BYTES":"MIN_FILE_SIZE","MAX_DAILY_BYTES":"DAILY_LIMIT","RUN_TIMES_MAX":"MAX_DOWNLOAD_COUNT"}
+                data = {_rm.get(k, k): v for k, v in data.items()}
                 success = write_env(data)
                 if success:
                     self._send_json({"success": True})

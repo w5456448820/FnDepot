@@ -6,7 +6,7 @@
 
 | 项目 | 内容 |
 |------|------|
-| 版本 | 1.0.0 |
+| 版本 | 1.0.1 |
 | 架构 | 全架构（x86 / ARM） |
 | 安装空间 | 系统空间 |
 | 运行端口 | 8080 |
@@ -26,7 +26,7 @@
 ### 通过 FnDepot 客户端安装（推荐）
 
 1. 在飞牛 NAS 应用中心安装 [FnDepot](https://github.com/EWEDLCM/FnDepot)
-2. 在 FnDepot 中添加本仓库地址：`https://github.com/w5456448820/traffic-keeper`
+2. 在 FnDepot 中添加本仓库地址：`https://github.com/w5456448820/FnDepot`
 3. 找到 Traffic Keeper，点击安装
 
 ### 手动安装
@@ -44,21 +44,28 @@
 
 | 参数 | 说明 | 默认值 | 单位 |
 |------|------|--------|------|
-| MAX_SPEED | 最大下载速度 | 0（不限速） | K/M/G |
-| MIN_SPEED | 最小保底速度 | 0（不限制） | K/M/G |
-| SLEEP_MIN / SLEEP_MAX | 下载间隔休眠范围 | 5 / 15 | s/m/h |
-| DAILY_LIMIT | 每日下载流量上限 | 0（不限制） | K/M/G/T |
+| LIMIT_RATE | 下载限速 | 5M | K/M/G |
+| SLEEP_MIN / SLEEP_MAX | 每轮休眠时间范围 | 1m / 15m | s/m/h |
+| DYNAMIC_SLEEP | 动态休眠（随机取值） | true | true/false |
+| ROUND_MIN_BYTES | 本轮最小下载总量（低于则跳过休眠） | 0 | K/M/G/T |
+| RUN_TIMES_MAX | 每轮最大下载次数 | 3 | - |
+| MAX_DAILY_BYTES | 每日流量限额 | 200G | K/M/G/T |
+| FETCH_MIN_FILE_BYTES | 抓取链接最小文件大小 | 500M | K/M/G/T |
 | FETCH_INTERVAL | 链接抓取间隔 | 6h | s/m/h |
 | LINK_CHECK_INTERVAL | 链接检测间隔 | 30m | s/m/h |
+| CONNECT_TIMEOUT | 连接超时 | 15s | s/m/h |
+| MAX_TIME | 单次下载最大时间 | 10m | s/m/h |
+| RETRY / RETRY_DELAY | 重试次数 / 间隔 | 5 / 5s | - / s/m/h |
+| DOWNLOAD_URLS | 备用下载链接 | 内置 5 个 | 逗号分隔 |
 | WEB_PORT | Web 管理界面端口 | 8080 | - |
-| DYNAMIC_SLEEP | 动态休眠（根据日进度调整） | false | - |
 
 ### Web 界面功能
 
 - **配置管理**：浏览器内直接修改所有参数，保存即时生效
-- **实时日志**：SSE 实时推送运行日志，支持关键词搜索
-- **链接管理**：查看已抓取的下载链接，手动触发重新抓取
-- **流量统计**：查看当日和历史下载流量统计
+- **终端日志**：SSE 实时推送运行日志，支持关键词搜索
+- **历史数据**：查看每日下载统计记录
+- **抓取链接**：查看已抓取和可用的下载链接列表
+- **配置下载源**：管理备用下载链接（抓取链接全部失效时使用）
 
 ## 注意事项
 
@@ -71,6 +78,27 @@
 
 完整源代码及构建脚本见 [`traffic-keeper/源代码/`](traffic-keeper/源代码/) 目录。
 
+## 更新日志
+
+### v1.0.1
+
+- 修复配置管理页面参数无默认值的问题
+- 修复终端日志页面空白（日志路径错误）的问题
+- 修复配置保存后参数名不匹配（前后端键名映射）的问题
+- 新增安装时自动初始化默认配置文件
+- 优化备用下载链接说明文案
+
+### v1.0.0
+
+- 首个飞牛 NAS 原生 FPK 版本
+- 飞牛应用中心原生集成，支持「打开」按钮直接访问
+- 自动下载大文件维持网络流量活跃
+- Web 管理界面（浏览器配置 + 实时日志 + 链接管理）
+- 多下载源自动切换（GitHub、镜像站）
+- 支持可选时间/数据单位（s/m/h, K/M/G/T）
+- 每日流量限额、限速、休眠时间等灵活配置
+- 运行端口：8080
+
 ## 问题反馈
 
-如遇到问题，请通过 [GitHub Issues](https://github.com/w5456448820/traffic-keeper/issues) 提交反馈。
+如遇到问题，请通过 [GitHub Issues](https://github.com/w5456448820/FnDepot/issues) 提交反馈。
