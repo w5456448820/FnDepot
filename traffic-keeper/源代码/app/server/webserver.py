@@ -40,8 +40,29 @@ def parse_env_lines():
         pass
     return lines
 
+DEFAULTS = {
+    "LIMIT_RATE": "5M",
+    "SLEEP_MAX": "15m",
+    "SLEEP_MIN": "1m",
+    "DYNAMIC_SLEEP": "true",
+    "ROUND_MIN_BYTES": "0",
+    "RUN_TIMES_MAX": "30",
+    "CONNECT_TIMEOUT": "15s",
+    "MAX_TIME": "10m",
+    "RETRY": "5",
+    "RETRY_DELAY": "5s",
+    "FETCH_INTERVAL": "6h",
+    "LINK_CHECK_INTERVAL": "30m",
+    "FETCH_MIN_FILE_BYTES": "500M",
+    "USER_AGENT": "traffic-keeper/1.0.1 curl/8.0",
+    "MAX_DAILY_BYTES": "200G",
+    "DOWNLOAD_URLS": "https://releases.ubuntu.com/22.04.5/ubuntu-22.04.5-desktop-amd64.iso,https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz,https://mirrors.tuna.tsinghua.edu.cn/ubuntu-releases/22.04.5/ubuntu-22.04.5-desktop-amd64.iso,https://mirrors.aliyun.com/linux-kernel/v6.x/linux-6.6.tar.xz,https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/v20.12.2/node-v20.12.2-linux-x64.tar.xz",
+    "WEB_PORT": "8080",
+    "REMOVE_DATA_ON_UNINSTALL": "false",
+}
+
 def env_to_dict():
-    result = {}
+    result = dict(DEFAULTS)
     for line in parse_env_lines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
@@ -447,7 +468,7 @@ const CONFIG_GROUPS=[
 {title:"时间设置",keys:["SLEEP_MIN","SLEEP_MAX","CONNECT_TIMEOUT","MAX_TIME","RETRY_DELAY","FETCH_INTERVAL"]},
 {title:"数据设置",keys:["LIMIT_RATE","ROUND_MIN_BYTES","FETCH_MIN_FILE_BYTES","MAX_DAILY_BYTES"]},
 {title:"网络连接",keys:["RUN_TIMES_MAX","RETRY","LINK_CHECK_INTERVAL","USER_AGENT"]},
-{title:"系统设置",keys:["DYNAMIC_SLEEP","WEB_PORT"]}
+{title:"系统设置",keys:["DYNAMIC_SLEEP","WEB_PORT","REMOVE_DATA_ON_UNINSTALL"]}
 ];
 const SOURCE_GROUPS=[
 {title:"下载源配置",keys:["DOWNLOAD_URLS"]}
@@ -470,7 +491,8 @@ FETCH_MIN_FILE_BYTES:{label:"最小文件大小",type:"text",desc:"支持 K/M/G/
 USER_AGENT:{label:"User-Agent",type:"text",desc:"HTTP 请求标识"},
 MAX_DAILY_BYTES:{label:"单日最大下载量",type:"text",desc:"支持 K/M/G/T 单位，如 200G / 1T",unit:"size"},
 DOWNLOAD_URLS:{label:"备用下载链接",type:"textarea",desc:"抓取链接全部失效时的备用链接，每行一个"},
-WEB_PORT:{label:"Web 端口",type:"number",desc:"管理界面端口，需与 docker-compose 一致"}
+WEB_PORT:{label:"Web 端口",type:"number",desc:"管理界面端口，需与 docker-compose 一致"},
+REMOVE_DATA_ON_UNINSTALL:{label:"卸载时删除数据",type:"select",options:[["true","删除"],["false","保留"]],desc:"卸载应用时是否一并删除所有数据（配置、日志、下载记录）"}
 };
 function parseTime(v){const m=String(v).trim().match(/^(\d+)\s*([smh]?)$/i);if(!m)return null;const n=parseInt(m[1]),u=m[2].toLowerCase();if(u==='h')return n*3600;if(u==='m')return n*60;return n}
 function parseSize(v){const m=String(v).trim().match(/^(\d+)\s*([KMGTkmgt]?[iI]?[bB]?)?$/);if(!m)return null;const n=parseInt(m[1]);const u=(m[2]||'').toLowerCase().charAt(0);const mul={t:1099511627776,g:1073741824,m:1048576,k:1024};return n*(mul[u]||1)}

@@ -1,2 +1,24 @@
 #!/bin/bash
+# Traffic Keeper - 卸载回调脚本
+# 可选是否删除全部数据（通过 .env 中的 REMOVE_DATA_ON_UNINSTALL 控制）
+
+DATA_DIR="${TRIM_PKGVAR}"
+ENV_FILE="${DATA_DIR}/.env"
+REMOVE_DATA="false"
+
+# 从 .env 读取配置
+if [ -f "$ENV_FILE" ]; then
+    val=$(grep -E '^REMOVE_DATA_ON_UNINSTALL=' "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d ' ')
+    [ "$val" = "true" ] && REMOVE_DATA="true"
+fi
+
+if [ "$REMOVE_DATA" = "true" ]; then
+    rm -rf "${DATA_DIR}"
+    echo "Traffic Keeper 已卸载，全部数据已删除"
+else
+    # 仅删除应用文件，保留用户数据
+    echo "Traffic Keeper 已卸载，数据保留在: ${DATA_DIR}"
+    echo "如需删除数据，请手动执行: rm -rf ${DATA_DIR}"
+fi
+
 exit 0
