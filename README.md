@@ -67,6 +67,10 @@
 - Web 管理界面默认绑定 0.0.0.0:8080，在内网中可直接访问
 - 如需限制访问，请通过飞牛 NAS 的防火墙或路由器 ACL 进行控制
 
+## 源代码
+
+完整源代码及构建脚本见 [`traffic-keeper/源代码/`](traffic-keeper/源代码/) 目录。
+
 ## 问题反馈
 
 如遇到问题，请通过 [GitHub Issues](https://github.com/w5456448820/traffic-keeper/issues) 提交反馈。
