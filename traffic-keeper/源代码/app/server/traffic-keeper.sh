@@ -33,6 +33,7 @@ is_uint() {
 }
 
 # 解析数据大小字符串为字节（支持 K/M/G/T，如 "10K", "5M", "2G", "1T"）
+# 优先使用 Python 计算大数（避免 busybox awk 32 位溢出）
 parse_size() {
     val="${1:-0}"
     val="$(echo "$val" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
@@ -40,14 +41,16 @@ parse_size() {
     unit="$(echo "$val" | sed 's/^[0-9]*//' | tr '[:upper:]' '[:lower:]')"
     [ -z "$num" ] && num=0
     is_uint "$num" || num=0
+    py=""
     case "$unit" in
-        t|ti|tib|tb) awk "BEGIN {print int($num * 1099511627776)}" ;;
-        g|gi|gib|gb) awk "BEGIN {print int($num * 1073741824)}" ;;
-        m|mi|mib|mb) awk "BEGIN {print int($num * 1048576)}" ;;
-        k|ki|kib|kb) awk "BEGIN {print int($num * 1024)}" ;;
-        ''|b|byte|bytes) echo "$num" ;;
-        *) echo "$num" ;;
+        t|ti|tib|tb) py="print(int($num * 1099511627776))" ;;
+        g|gi|gib|gb) py="print(int($num * 1073741824))" ;;
+        m|mi|mib|mb) py="print(int($num * 1048576))" ;;
+        k|ki|kib|kb) py="print(int($num * 1024))" ;;
+        ''|b|byte|bytes) echo "$num"; return ;;
+        *) echo "$num"; return ;;
     esac
+    python3 -c "$py" 2>/dev/null || awk "BEGIN {print int($num * 1024)}" 2>/dev/null || echo "$num"
 }
 
 # 解析时间字符串为秒（支持 s/m/h，如 "10s", "5m", "2h"）
@@ -67,21 +70,27 @@ parse_time() {
 }
 
 # 1024进制字节转人类可读格式（TiB/GiB/MiB/KiB，绝对无单位错误）
+# 优先使用 Python 避免 busybox awk 大数溢出
 human_bytes() {
     VALUE="${1:-0}"
     is_uint "$VALUE" || VALUE=0
-    # 顺序必须从大到小，确保优先匹配大单位
+    py_res=""
     for unit in TiB GiB MiB KiB B; do
         div=1
         case "$unit" in
-            TiB) div=1099511627776 ;;  # 1024^4，之前你这里是错的！
-            GiB) div=1073741824 ;;      # 1024^3
-            MiB) div=1048576 ;;         # 1024^2
-            KiB) div=1024 ;;            # 1024^1
+            TiB) div=1099511627776 ;;
+            GiB) div=1073741824 ;;
+            MiB) div=1048576 ;;
+            KiB) div=1024 ;;
             B)   div=1 ;;
         esac
         if [ "$VALUE" -ge "$div" ]; then
-            echo "$(awk "BEGIN {printf \"%.2f\", $VALUE/$div}") $unit"
+            py_res="$(python3 -c "print(f'{$VALUE / $div:.2f}')" 2>/dev/null)"
+            if [ -n "$py_res" ]; then
+                echo "$py_res $unit"
+            else
+                echo "$(awk "BEGIN {printf \"%.2f\", $VALUE/$div}") $unit"
+            fi
             return
         fi
     done
