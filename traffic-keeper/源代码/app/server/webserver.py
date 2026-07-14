@@ -505,7 +505,7 @@ USER_AGENT:{label:"User-Agent",type:"text",desc:"HTTP 请求标识"},
 MAX_DAILY_BYTES:{label:"单日最大下载量",type:"text",desc:"支持 K/M/G/T 单位，如 200G / 1T",unit:"size"},
 DOWNLOAD_URLS:{label:"备用下载链接",type:"textarea",desc:"抓取链接全部失效时的备用链接，每行一个"},
 WEB_PORT:{label:"Web 端口",type:"number",desc:"管理界面端口，需与 docker-compose 一致"},
-REMOVE_DATA_ON_UNINSTALL:{label:"卸载时删除数据",type:"select",options:[["true","删除"],["false","保留"]],desc:"卸载应用时是否一并删除所有数据（配置、日志、下载记录）"}
+REMOVE_DATA_ON_UNINSTALL:{label:"卸载时删除数据",type:"select",options:[["true","删除"],["false","保留"]],desc:"卸载应用时是否删除所有数据（配置、日志、记录）。卸载前请先保存此配置"}
 };
 function parseTime(v){const m=String(v).trim().match(/^(\d+)\s*([smh]?)$/i);if(!m)return null;const n=parseInt(m[1]),u=m[2].toLowerCase();if(u==='h')return n*3600;if(u==='m')return n*60;return n}
 function parseSize(v){const m=String(v).trim().match(/^(\d+)\s*([KMGTkmgt]?[iI]?[bB]?)?$/);if(!m)return null;const n=parseInt(m[1]);const u=(m[2]||'').toLowerCase().charAt(0);const mul={t:1099511627776,g:1073741824,m:1048576,k:1024};return n*(mul[u]||1)}
