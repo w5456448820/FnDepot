@@ -1,8 +1,9 @@
 #!/usr/bin/env sh
 # =========================================================
 #  Traffic Keeper - 主运行脚本
-#  Version : 2.9.2
+#  Version : 1.0.3
 #  更新内容：
+#    - GitHub Release 链接优先尝试 HEAD 检查文件大小，避免下载过小文件
 #    - 修复 busybox awk printf "%d" 大数溢出导致单日下载限额失效
 #    - 修复 GitHub Release 链接抓取后丢失问题
 #    - GitHub Release 链接跳过 HEAD 大小检查（CDN 返回假 Content-Length）
@@ -388,9 +389,28 @@ validate_link() {
     URL="$(normalize_url "$1")"
     [ -n "$URL" ] || return 1
 
-    # GitHub Release 文件通常较大且 CDN 返回假 Content-Length，直接放行
+    # GitHub Release 链接：优先尝试 HEAD 检查大小，HEAD 失败时放行（CDN 可能返回假 Content-Length）
     case "$URL" in
         *github.com*/releases/download/*)
+            if [ "$FETCH_MIN_FILE_BYTES" -gt 0 ] 2>/dev/null; then
+                set +e
+                HEAD_OUT="$(curl -IL --connect-timeout 5 --max-time 30 --fail -L \
+                    -A "$USER_AGENT" -w "\nHTTP_CODE=%{http_code}\n" "$URL" 2>&1)"
+                CURL_EXIT=$?
+                HTTP_CODE="$(echo "$HEAD_OUT" | grep HTTP_CODE | tail -n 1 | cut -d= -f2)"
+                REMOTE_SIZE="$(echo "$HEAD_OUT" | tr -d '\r' | awk 'tolower($1)=="content-length:" {print $2}' | tail -n 1)"
+                if is_uint "$REMOTE_SIZE" && [ "$REMOTE_SIZE" -gt 0 ]; then
+                    check_min_file_size "$REMOTE_SIZE"
+                    SIZE_CHECK_EXIT=$?
+                    if [ "$SIZE_CHECK_EXIT" -eq 0 ]; then
+                        echo "✅ 可用链接：$URL（GitHub Release，$(human_bytes "$REMOTE_SIZE")）"
+                        return 0
+                    elif [ "$SIZE_CHECK_EXIT" -eq 1 ]; then
+                        echo "❌ 不可用链接：$URL（GitHub Release，文件过小：$(human_bytes "$REMOTE_SIZE") < $(human_bytes "$FETCH_MIN_FILE_BYTES")）"
+                        return 1
+                    fi
+                fi
+            fi
             echo "✅ 可用链接：$URL（GitHub Release，跳过大小检查）"
             return 0
             ;;
@@ -597,10 +617,25 @@ while true; do
         [ -n "$LINK_SOURCE" ] && printf '   来源: %s\n' "$LINK_SOURCE"
 
         SKIP_DOWNLOAD=false
-        # GitHub Release 跳过大小检查（CDN 返回假 Content-Length）
+        # GitHub Release 链接：优先尝试 HEAD 检查大小，HEAD 失败时放行
         case "$URL" in
             *github.com*/releases/download/*)
-                echo "   [下载前] ℹ️  GitHub Release 链接，跳过大小检查"
+                if [ "$FETCH_MIN_FILE_BYTES" -gt 0 ]; then
+                    set +e
+                    HEAD_SIZE="$(curl -IL --connect-timeout 5 --max-time 30 --fail -L \
+                        -A "$USER_AGENT" -w "\nHTTP_CODE=%{http_code}\n" "$URL" 2>&1 \
+                        | grep -i '^content-length:' | tail -n 1 | awk '{print $2}' | tr -d '\r')"
+                    if is_uint "$HEAD_SIZE" && [ "$HEAD_SIZE" -gt 0 ]; then
+                        if [ "$HEAD_SIZE" -lt "$FETCH_MIN_FILE_BYTES" ]; then
+                            echo "   [下载前] ❌ 文件过小，跳过：$(human_bytes "$HEAD_SIZE") < $(human_bytes "$FETCH_MIN_FILE_BYTES")"
+                            SKIP_DOWNLOAD=true
+                        else
+                            echo "   [下载前] ✅ 文件大小达标：$(human_bytes "$HEAD_SIZE")"
+                        fi
+                    else
+                        echo "   [下载前] ℹ️  GitHub Release 链接，无法确认文件大小，继续下载"
+                    fi
+                fi
                 ;;
             *)
                 if [ "$FETCH_MIN_FILE_BYTES" -gt 0 ]; then
