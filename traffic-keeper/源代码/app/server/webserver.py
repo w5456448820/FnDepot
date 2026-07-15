@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # =========================================================
 #  Traffic Keeper - Web 管理界面服务器
-#  Version : 1.0.2
+#  Version : 1.0.3
 #  端口：默认 8080，可通过 .env 的 WEB_PORT 配置
 # =========================================================
 import http.server
@@ -54,7 +54,7 @@ DEFAULTS = {
     "FETCH_INTERVAL": "6h",
     "LINK_CHECK_INTERVAL": "30m",
     "FETCH_MIN_FILE_BYTES": "500M",
-    "USER_AGENT": "traffic-keeper/1.0.2 curl/8.0",
+    "USER_AGENT": "traffic-keeper/1.0.3 curl/8.0",
     "MAX_DAILY_BYTES": "200G",
     "DOWNLOAD_URLS": "https://releases.ubuntu.com/22.04.5/ubuntu-22.04.5-desktop-amd64.iso,https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.tar.xz,https://mirrors.tuna.tsinghua.edu.cn/ubuntu-releases/22.04.5/ubuntu-22.04.5-desktop-amd64.iso,https://mirrors.aliyun.com/linux-kernel/v6.x/linux-6.6.tar.xz,https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/v20.12.2/node-v20.12.2-linux-x64.tar.xz",
     "WEB_PORT": "8080",
