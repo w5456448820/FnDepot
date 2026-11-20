@@ -15,7 +15,7 @@
 
 | 应用 | 应用标识 | 最新版本 | 架构 | 服务端口 | 源码 | 测试状态 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 证件号生成器 | `zjhsql` | 1.0.1 | all（x86 / arm 通用） | 23180 | [id-number-generator](https://github.com/w5456448820/id-number-generator) | 包结构校验：通过<br>接口功能测试：通过<br>fnOS 实机安装：待复测 | 生成统一社会信用代码、组织机构代码与居民身份证号码，支持 GB/T 2260 三级行政区划联动与 GB 11643 校验位计算 |
+| 证件号生成器 | `zjhsql` | 1.0.1 | all（x86 / arm 通用） | 23180 | [id-number-generator](https://github.com/w5456448820/id-number-generator) | 包结构校验：通过<br>接口功能测试：通过<br>fnOS 实机安装：X86通过 | 生成统一社会信用代码、组织机构代码与居民身份证号码，支持 GB/T 2260 三级行政区划联动与 GB 11643 校验位计算 |
 
 - 应用标识即 `appname`，需与安装包 `manifest` 中的 `appname` 完全一致（区分大小写）。
 - 源码含 `manifest`、`app/server`（生成算法与内置 http 服务）、`app/www`（单页前端）、`cmd` 生命周期脚本，纯 Python 标准库实现；改版后按其说明重新构建，再将产物更新到本仓库。
