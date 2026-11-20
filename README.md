@@ -25,10 +25,16 @@
 ├── packages/                    # FPK 安装包
 │   ├── zjhsql-1.0.0-x86.fpk
 │   └── zjhsql-1.0.0-arm.fpk
-└── assets/
-    ├── icons/                   # 应用图标
-    └── previews/                # 应用预览图
+├── assets/
+│   ├── icons/                   # 应用图标
+│   └── previews/                # 应用预览图
+└── src/
+    └── zjhsql/                  # 证件号生成器 FPK 工程源码
 ```
+
+## 源码
+
+FPK 打包工程源码位于 [`src/zjhsql`](src/zjhsql)，含 `manifest`、`app/server`（生成算法与内置 http 服务）、`app/www`（单页前端）、`cmd` 生命周期脚本，纯 Python 标准库实现。构建方式见 [src/zjhsql/README.md](src/zjhsql/README.md)。
 
 ## 安装包校验
 
