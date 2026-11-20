@@ -11,8 +11,7 @@
       "display_name": "证件号生成器",
       "desc": "生成统一社会信用代码、组织机构代码与居民身份证号码，支持 GB/T 2260 三级行政区划联动与 GB 11643 校验位计算。默认端口 23180。所有号码均为随机虚构，仅供软件开发测试、系统联调与数据脱敏演示使用。",
       "platform": [
-        "x86",
-        "arm"
+        "all"
       ],
       "categories": [
         "编程开发"
@@ -32,18 +31,13 @@
       "service_port": "23180",
       "releases": {
         "1.0.0": {
-          "changelog": "首个版本：网页版证件号生成器，23180 端口提供网页服务；提供 x86 与 arm 双架构包，x86 已在 fnOS 实机安装与功能测试通过。",
-          "updated_at": "2026-11-20T15:23:03+08:00",
+          "changelog": "首个版本：网页版证件号生成器，23180 端口提供网页服务。已合并为 platform=all 单包（包内仅含脚本与静态资源，无架构相关二进制），x86 与 arm 设备通用。",
+          "updated_at": "2026-11-20T17:00:40+08:00",
           "packages": {
-            "x86": {
-              "download_url": "zjhsql/zjhsql-1.0.0-x86.fpk",
-              "sha256": "6ac02f19dd93cf977bf22c7f9751cb8a146658043aebac381de75103975d0b89",
-              "size": 90588
-            },
-            "arm": {
-              "download_url": "zjhsql/zjhsql-1.0.0-arm.fpk",
-              "sha256": "6a945e6af85ddf81ff0d013713d54bc483e2469aa43df5691b681103db7a2b82",
-              "size": 58162
+            "all": {
+              "download_url": "zjhsql/zjhsql-1.0.0-all.fpk",
+              "sha256": "b5211dce5c5f8d7e473b5680252495db4910fb8441cdd615c180356a54731430",
+              "size": 57466
             }
           }
         }

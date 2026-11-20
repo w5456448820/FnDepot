@@ -2,7 +2,7 @@
 
 个人维护的飞牛 fnOS 外部应用源，格式遵循 [FnDepot V2 规范](https://github.com/EWEDLCM/FnDepot)，仅收录自研且已在真机实测通过的应用。
 
-仓库按应用分目录：根目录下每个应用一个目录（目录名即 `appname`），该应用的安装包、图标、预览图与 FPK 工程源码集中在内。应用所属分类不体现在目录上，由 `fnpack.json` 中每个应用的 `categories` 字段决定，客户端据此在分类页归类展示。
+仓库按应用分目录：根目录下每个应用一个目录（目录名即 `appname`），该应用的安装包、图标与预览图集中在内。应用所属分类不体现在目录上，由 `fnpack.json` 中每个应用的 `categories` 字段决定，客户端据此在分类页归类展示。
 
 ## 添加源
 
@@ -15,7 +15,7 @@
 
 | 分类 | 应用 | appname | 版本 | 架构 | 服务端口 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 编程开发 | 证件号生成器 | `zjhsql` | 1.0.0 | x86 / arm | 23180 | 生成统一社会信用代码、组织机构代码与居民身份证号码，支持 GB/T 2260 三级行政区划联动与 GB 11643 校验位计算 |
+| 编程开发 | 证件号生成器 | `zjhsql` | 1.0.0 | all（x86 / arm 通用） | 23180 | 生成统一社会信用代码、组织机构代码与居民身份证号码，支持 GB/T 2260 三级行政区划联动与 GB 11643 校验位计算 |
 
 所有号码均为随机虚构，仅供软件开发测试、系统联调与数据脱敏演示使用。
 
@@ -32,36 +32,36 @@
 .
 ├── fnpack.json                       # V2 源索引（客户端唯一入口）
 └── zjhsql/                           # 应用目录：证件号生成器
-    ├── zjhsql-1.0.0-x86.fpk
-    ├── zjhsql-1.0.0-arm.fpk
+    ├── zjhsql-1.0.0-all.fpk
     ├── icon.png
-    ├── previews/
-    │   ├── preview_1_page.png
-    │   └── preview_2_generate.png
-    └── src/                          # FPK 打包工程源码
+    └── previews/
+        ├── preview_1_page.png
+        └── preview_2_generate.png
 ```
 
-新增应用时按同一布局落位：`<appname>/{<appname>-<版本>-<架构>.fpk, icon.png, previews/, src/}`，并在 `fnpack.json` 中补齐 `categories` 与相对 URL。
+新增应用时按同一布局落位：`<appname>/{<appname>-<版本>-all.fpk, icon.png, previews/}`，并在 `fnpack.json` 中补齐 `categories` 与相对 URL。
 
 ## 源码
 
-FPK 打包工程源码位于 [`zjhsql/src`](zjhsql/src)，含 `manifest`、`app/server`（生成算法与内置 http 服务）、`app/www`（单页前端）、`cmd` 生命周期脚本，纯 Python 标准库实现。构建方式见 [src/README.md](zjhsql/src/README.md)。
+FPK 打包工程源码不随本源仓库分发，统一维护在独立仓库：[w5456448820/id-number-generator](https://github.com/w5456448820/id-number-generator)。
+
+该仓库含 `manifest`、`app/server`（生成算法与内置 http 服务）、`app/www`（单页前端）、`cmd` 生命周期脚本，纯 Python 标准库实现；改版后按其说明重新构建，再将产物更新到本仓库即可。
 
 ## 安装包校验
 
 | 文件 | 架构 | 大小（Bytes） | SHA256 |
 | --- | --- | --- | --- |
-| `zjhsql/zjhsql-1.0.0-x86.fpk` | x86 | 90588 | `6ac02f19dd93cf977bf22c7f9751cb8a146658043aebac381de75103975d0b89` |
-| `zjhsql/zjhsql-1.0.0-arm.fpk` | arm | 58162 | `6a945e6af85ddf81ff0d013713d54bc483e2469aa43df5691b681103db7a2b82` |
+| `zjhsql/zjhsql-1.0.0-all.fpk` | all | 57466 | `b5211dce5c5f8d7e473b5680252495db4910fb8441cdd615c180356a54731430` |
 
-两个包内容一致，均为纯 Python 标准库实现的网页服务，仅 manifest 的 `platform` 字段不同。
+包内仅含 shell 生命周期脚本、Python 标准库服务端与静态前端资源，不含任何架构相关二进制，因此按 `platform=all` 单包分发，x86 与 arm 设备通用。
 
 ## 测试状态
 
-| 架构 | 状态 |
+| 项目 | 状态 |
 | --- | --- |
-| x86 | 已在 fnOS（MEmini-13F2）实机安装、启动并通过功能测试 |
-| arm | 已构建并通过结构与 manifest 校验，尚未在 arm 设备实测 |
+| 包结构校验 | 通过 —— tar.gz 可正常解包；顶层与 `app.tgz` 内条目、权限位与已实机验证的 x86 包逐项一致；`manifest` 的 `checksum` 与包内 `app.tgz` 的 MD5 一致 |
+| 接口功能测试 | 通过 —— `/api/health`、`/api/districts`（31 个省级行政区）、`/api/generate`（`scc` / `org` / `id` 三类，含地区码、出生日期、性别定制）均返回预期结果 |
+| fnOS 实机安装 | 待复测 —— all 单包尚未在 fnOS 设备上执行安装与启动验证 |
 
 ## 说明
 
