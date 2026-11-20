@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>证件号生成器</title>
+<style>
+  :root{
+    --bg:#eef2f8; --card:#fff; --bd:#d8e0ec; --primary:#2f6fd0; --primary-d:#2559a8;
+    --txt:#2c3e50; --sub:#7a8899; --danger:#c0392b; --ok:#1e9e63;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    font-size:14px;line-height:1.6;-webkit-text-size-adjust:100%}
+  .wrap{max-width:820px;margin:0 auto;padding:20px 16px 48px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  header img{width:44px;height:44px;border-radius:10px}
+  header h1{font-size:19px;margin:0;font-weight:600}
+  header p{margin:0;color:var(--sub);font-size:12px}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;
+    padding:18px;box-shadow:0 2px 10px rgba(47,111,208,.05)}
+  .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .tab{flex:1 1 auto;min-width:120px;text-align:center;padding:10px 12px;border-radius:10px;
+    border:1px solid var(--bd);background:#f7f9fd;color:var(--sub);cursor:pointer;
+    font-size:13px;transition:.15s;user-select:none}
+  .tab:hover{border-color:#b9cbe8}
+  .tab.on{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+  .pane{display:none}
+  .pane.on{display:block}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .field{flex:1 1 160px;min-width:0}
+  label{display:block;font-size:12px;color:var(--sub);margin-bottom:5px}
+  select,input{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:9px;
+    background:#fff;color:var(--txt);font-size:14px;outline:none;font-family:inherit}
+  select:focus,input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(47,111,208,.12)}
+  .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px}
+  button{font-family:inherit;font-size:14px;border-radius:9px;border:1px solid transparent;
+    padding:10px 18px;cursor:pointer;transition:.15s}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-primary:hover{background:var(--primary-d)}
+  .btn-ghost{background:#fff;color:var(--primary);border-color:var(--bd)}
+  .btn-ghost:hover{border-color:var(--primary)}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  .result{margin-top:16px}
+  .res-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;
+    font-size:12px;color:var(--sub)}
+  .codes{border:1px solid var(--bd);border-radius:10px;overflow:hidden;background:#fbfcfe}
+  .code{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 12px;border-bottom:1px solid #edf1f7;font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:14px;letter-spacing:.4px;word-break:break-all}
+  .code:last-child{border-bottom:none}
+  .code:hover{background:#f4f8ff}
+  .copy{flex:0 0 auto;font-size:12px;color:var(--primary);background:#eef4ff;border:1px solid #d6e4ff;
+    border-radius:7px;padding:3px 9px;cursor:pointer;font-family:inherit}
+  .copy:hover{background:#e2edff}
+  .empty{padding:22px;text-align:center;color:var(--sub);font-size:13px}
+  .msg{margin-top:10px;font-size:13px;min-height:20px}
+  .msg.err{color:var(--danger)}
+  .msg.ok{color:var(--ok)}
+  .note{margin-top:18px;padding-top:12px;border-top:1px dashed var(--bd);
+    font-size:12px;color:var(--danger);line-height:1.7}
+  .hint{font-size:12px;color:var(--sub);margin-top:-6px;margin-bottom:12px}
+  @media(max-width:520px){
+    .wrap{padding:14px 12px 36px}
+    .card{padding:14px;border-radius:12px}
+    .field{flex:1 1 100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="icon-256.png" alt="">
+    <div>
+      <h1>证件号生成器</h1>
+      <p>统一社会信用代码 / 组织机构代码 / 居民身份证号</p>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="tabs">
+      <div class="tab on" data-pane="scc">统一社会信用代码</div>
+      <div class="tab" data-pane="org">组织机构代码</div>
+      <div class="tab" data-pane="id">居民身份证号</div>
+    </div>
+
+    <!-- 统一社会信用代码 -->
+    <div class="pane on" id="pane-scc">
+      <div class="row">
+        <div class="field">
+          <label>生成数量</label>
+          <input id="scc-count" type="number" min="1" max="200" value="5">
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end">
+          <div class="actions">
+            <button class="btn-primary" data-act="scc">生成</button>
+            <button class="btn-ghost" data-copy="scc">复制全部</button>
+          </div>
+        </div>
+      </div>
+      <div class="result">
+        <div class="res-head"><span>结果</span><span id="scc-sum"></span></div>
+        <div class="codes" id="scc-out"><div class="empty">尚未生成</div></div>
+      </div>
+      <div class="msg" id="scc-msg"></div>
+    </div>
+
+    <!-- 组织机构代码 -->
+    <div class="pane" id="pane-org">
+      <div class="row">
+        <div class="field">
+          <label>生成数量</label>
+          <input id="org-count" type="number" min="1" max="200" value="5">
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end">
+          <div class="actions">
+            <button class="btn-primary" data-act="org">生成</button>
+            <button class="btn-ghost" data-copy="org">复制全部</button>
+          </div>
+        </div>
+      </div>
+      <div class="result">
+        <div class="res-head"><span>结果（8 位本体 + 校验位）</span><span id="org-sum"></span></div>
+        <div class="codes" id="org-out"><div class="empty">尚未生成</div></div>
+      </div>
+      <div class="msg" id="org-msg"></div>
+    </div>
+
+    <!-- 身份证 -->
+    <div class="pane" id="pane-id">
+      <div class="row">
+        <div class="field">
+          <label>省份</label>
+          <select id="id-prov"><option value="">随机</option></select>
+        </div>
+        <div class="field">
+          <label>城市</label>
+          <select id="id-city"><option value="">随机</option></select>
+        </div>
+        <div class="field">
+          <label>区县</label>
+          <select id="id-dist"><option value="">随机</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>出生日期（留空随机）</label>
+          <input id="id-birth" type="text" placeholder="19900101 或 1990-1-1">
+        </div>
+        <div class="field">
+          <label>性别</label>
+          <select id="id-sex">
+            <option value="随机">随机</option>
+            <option value="男">男</option>
+            <option value="女">女</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>生成数量</label>
+          <input id="id-count" type="number" min="1" max="200" value="5">
+        </div>
+      </div>
+      <div class="hint">地址码取自 GB/T 2260 行政区划；出生日期留空则在 1960-01-01 ~ 2005-12-31 内随机。</div>
+      <div class="actions">
+        <button class="btn-primary" data-act="id">生成</button>
+        <button class="btn-ghost" data-copy="id">复制全部</button>
+      </div>
+      <div class="result">
+        <div class="res-head"><span>结果</span><span id="id-sum"></span></div>
+        <div class="codes" id="id-out"><div class="empty">尚未生成</div></div>
+      </div>
+      <div class="msg" id="id-msg"></div>
+    </div>
+
+    <div class="note">
+      本工具生成的号码均为随机虚构，仅供软件开发测试、系统联调、数据脱敏演示等合法场景使用。
+      严禁用于伪造证件、冒用他人身份、绕过实名认证或任何其他违法违规用途。
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var API = (location.pathname.endsWith('/') ? location.pathname : location.pathname + '/') + 'api/';
+  var DATA = {provinces: []};
+  var store = {scc: [], org: [], id: []};
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  // 选项卡
+  var tabs = document.querySelectorAll('.tab');
+  Array.prototype.forEach.call(tabs, function(t){
+    t.addEventListener('click', function(){
+      Array.prototype.forEach.call(tabs, function(x){ x.classList.remove('on'); });
+      Array.prototype.forEach.call(document.querySelectorAll('.pane'), function(x){ x.classList.remove('on'); });
+      t.classList.add('on');
+      $('pane-' + t.dataset.pane).classList.add('on');
+    });
+  });
+
+  function setMsg(kind, text, isErr){
+    var el = $(kind + '-msg');
+    el.className = 'msg ' + (isErr ? 'err' : 'ok');
+    el.textContent = text || '';
+  }
+
+  function render(kind){
+    var box = $(kind + '-out');
+    var list = store[kind];
+    if(!list.length){ box.innerHTML = '<div class="empty">尚未生成</div>'; $(kind + '-sum').textContent = ''; return; }
+    var html = '';
+    for(var i = 0; i < list.length; i++){
+      html += '<div class="code"><span>' + esc(list[i]) + '</span>' +
+              '<button class="copy" data-i="' + i + '" data-k="' + kind + '">复制</button></div>';
+    }
+    box.innerHTML = html;
+    $(kind + '-sum').textContent = '共 ' + list.length + ' 条';
+  }
+
+  function copyText(text){
+    if(navigator.clipboard && window.isSecureContext){
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function(res, rej){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); res(); }catch(e){ rej(e); }
+      document.body.removeChild(ta);
+    });
+  }
+
+  function doGenerate(kind){
+    var payload = {type: kind};
+    if(kind === 'id'){
+      payload.area = $('id-dist').value || $('id-city').value || $('id-prov').value || '';
+      payload.birthday = $('id-birth').value.trim();
+      payload.sex = $('id-sex').value;
+      payload.count = parseInt($('id-count').value, 10) || 1;
+    }else{
+      payload.count = parseInt($(kind + '-count').value, 10) || 1;
+    }
+
+    var btn = document.querySelector('[data-act="' + kind + '"]');
+    btn.disabled = true;
+    setMsg(kind, '生成中…', false);
+    fetch(API + 'generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    }).then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d.ok){ throw new Error(d.error || '生成失败'); }
+        store[kind] = d.codes || [];
+        render(kind);
+        setMsg(kind, '已生成 ' + store[kind].length + ' 条', false);
+      })
+      .catch(function(e){ setMsg(kind, e.message || '请求失败', true); })
+      .then(function(){ btn.disabled = false; });
+  }
+
+  // 结果区复制
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if(t.classList && t.classList.contains('copy')){
+      var k = t.dataset.k, i = parseInt(t.dataset.i, 10);
+      copyText(store[k][i]).then(function(){ setMsg(k, '已复制', false); })
+        .catch(function(){ setMsg(k, '复制失败，请手动选择', true); });
+    }
+    if(t.dataset && t.dataset.act){ doGenerate(t.dataset.act); }
+    if(t.dataset && t.dataset.copy){
+      var kind = t.dataset.copy;
+      if(!store[kind].length){ setMsg(kind, '还没有可复制的结果', true); return; }
+      copyText(store[kind].join('\n')).then(function(){ setMsg(kind, '已复制全部 ' + store[kind].length + ' 条', false); })
+        .catch(function(){ setMsg(kind, '复制失败，请手动选择', true); });
+    }
+  });
+
+  // 三级联动
+  function fillSelect(sel, items, randomLabel){
+    var html = '<option value="">' + randomLabel + '</option>';
+    for(var i = 0; i < items.length; i++){
+      html += '<option value="' + esc(items[i].code) + '">' + esc(items[i].name) + '</option>';
+    }
+    sel.innerHTML = html;
+  }
+  function findProv(code){
+    for(var i = 0; i < DATA.provinces.length; i++){
+      if(DATA.provinces[i].code === code){ return DATA.provinces[i]; }
+    }
+    return null;
+  }
+  function findCity(p, code){
+    if(!p){ return null; }
+    for(var i = 0; i < p.cities.length; i++){
+      if(p.cities[i].code === code){ return p.cities[i]; }
+    }
+    return null;
+  }
+  function refreshCity(){
+    var p = findProv($('id-prov').value);
+    fillSelect($('id-city'), p ? p.cities : [], '随机');
+    fillSelect($('id-dist'), [], '随机');
+  }
+  function refreshDist(){
+    var p = findProv($('id-prov').value);
+    var c = findCity(p, $('id-city').value);
+    fillSelect($('id-dist'), c ? c.districts : [], '随机');
+  }
+
+  $('id-prov').addEventListener('change', refreshCity);
+  $('id-city').addEventListener('change', refreshDist);
+
+  fetch(API + 'districts').then(function(r){ return r.json(); })
+    .then(function(d){
+      DATA.provinces = d.provinces || [];
+      fillSelect($('id-prov'), DATA.provinces, '随机');
+    })
+    .catch(function(){ setMsg('id', '行政区划数据加载失败，仍可随机生成', true); });
+
+  render('scc'); render('org'); render('id');
+})();
+</script>
+</body>
+</html>

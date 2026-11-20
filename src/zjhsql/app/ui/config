@@ -1,0 +1,13 @@
+{
+  ".url": {
+    "zjhsql.url": {
+      "title": "证件号生成器",
+      "icon": "images/icon_{0}.png",
+      "type": "url",
+      "protocol": "http",
+      "port": "23180",
+      "url": "/",
+      "allUsers": true
+    }
+  }
+}
