@@ -4,7 +4,7 @@
     "name": "zjhsql 应用源",
     "author": "w5456448820",
     "homepage": "https://github.com/w5456448820",
-    "description": "个人维护的飞牛 fnOS 第三方应用源，仅收录自研并实测通过的应用。"
+    "description": "个人维护的飞牛 fnOS 第三方应用源，仅收录自研并实测通过的应用；仓库按应用分类分目录组织，客户端可按分类筛选浏览。"
   },
   "apps": {
     "zjhsql": {
@@ -17,10 +17,10 @@
       "categories": [
         "编程开发"
       ],
-      "icon_url": "assets/icons/zjhsql.png",
+      "icon_url": "assets/develop/zjhsql/icon.png",
       "preview_urls": [
-        "assets/previews/preview_1_page.png",
-        "assets/previews/preview_2_generate.png"
+        "assets/develop/zjhsql/previews/preview_1_page.png",
+        "assets/develop/zjhsql/previews/preview_2_generate.png"
       ],
       "maintainer": "w5456448820",
       "maintainer_url": "https://github.com/w5456448820/id-number-generator",
@@ -36,12 +36,12 @@
           "updated_at": "2026-11-20T15:23:03+08:00",
           "packages": {
             "x86": {
-              "download_url": "packages/zjhsql-1.0.0-x86.fpk",
+              "download_url": "packages/develop/zjhsql-1.0.0-x86.fpk",
               "sha256": "6ac02f19dd93cf977bf22c7f9751cb8a146658043aebac381de75103975d0b89",
               "size": 90588
             },
             "arm": {
-              "download_url": "packages/zjhsql-1.0.0-arm.fpk",
+              "download_url": "packages/develop/zjhsql-1.0.0-arm.fpk",
               "sha256": "6a945e6af85ddf81ff0d013713d54bc483e2469aa43df5691b681103db7a2b82",
               "size": 58162
             }
