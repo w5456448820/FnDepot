@@ -17,10 +17,10 @@
       "categories": [
         "编程开发"
       ],
-      "icon_url": "develop/zjhsql/icon.png",
+      "icon_url": "zjhsql/icon.png",
       "preview_urls": [
-        "develop/zjhsql/previews/preview_1_page.png",
-        "develop/zjhsql/previews/preview_2_generate.png"
+        "zjhsql/previews/preview_1_page.png",
+        "zjhsql/previews/preview_2_generate.png"
       ],
       "maintainer": "w5456448820",
       "maintainer_url": "https://github.com/w5456448820/id-number-generator",
@@ -36,12 +36,12 @@
           "updated_at": "2026-11-20T15:23:03+08:00",
           "packages": {
             "x86": {
-              "download_url": "develop/zjhsql/zjhsql-1.0.0-x86.fpk",
+              "download_url": "zjhsql/zjhsql-1.0.0-x86.fpk",
               "sha256": "6ac02f19dd93cf977bf22c7f9751cb8a146658043aebac381de75103975d0b89",
               "size": 90588
             },
             "arm": {
-              "download_url": "develop/zjhsql/zjhsql-1.0.0-arm.fpk",
+              "download_url": "zjhsql/zjhsql-1.0.0-arm.fpk",
               "sha256": "6a945e6af85ddf81ff0d013713d54bc483e2469aa43df5691b681103db7a2b82",
               "size": 58162
             }
