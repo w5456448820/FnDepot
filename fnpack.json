@@ -31,13 +31,13 @@
       "service_port": "23180",
       "releases": {
         "1.0.0": {
-          "changelog": "首个版本：网页版证件号生成器，23180 端口提供网页服务。已合并为 platform=all 单包（包内仅含脚本与静态资源，无架构相关二进制），x86 与 arm 设备通用。",
-          "updated_at": "2026-11-20T17:00:40+08:00",
+          "changelog": "首个版本：网页版证件号生成器，23180 端口提供网页服务。已合并为 platform=all 单包（包内仅含脚本与静态资源，无架构相关二进制），x86 与 arm 设备通用。重发修正：包内图标（ICON.PNG / ICON_256.PNG / ui/images/icon_*.png）恢复为应用原始图标，修复重装后图标显示异常。",
+          "updated_at": "2026-11-20T17:36:00+08:00",
           "packages": {
             "all": {
               "download_url": "zjhsql/zjhsql-1.0.0-all.fpk",
-              "sha256": "b5211dce5c5f8d7e473b5680252495db4910fb8441cdd615c180356a54731430",
-              "size": 57466
+              "sha256": "3fc0637c9593f08016d271d35bbd4b989f2331e157b876ccb14da9c0555784c0",
+              "size": 90187
             }
           }
         }

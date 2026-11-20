@@ -41,7 +41,7 @@
 
 | 文件 | 架构 | 大小（Bytes） | SHA256 |
 | --- | --- | --- | --- |
-| `zjhsql/zjhsql-1.0.0-all.fpk` | all | 57466 | `b5211dce5c5f8d7e473b5680252495db4910fb8441cdd615c180356a54731430` |
+| `zjhsql/zjhsql-1.0.0-all.fpk` | all | 90187 | `3fc0637c9593f08016d271d35bbd4b989f2331e157b876ccb14da9c0555784c0` |
 
 包内仅含 shell 生命周期脚本、Python 标准库服务端与静态前端资源，不含任何架构相关二进制，因此按 `platform=all` 单包分发，x86 与 arm 设备通用。
 
